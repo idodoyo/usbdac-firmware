@@ -1,0 +1,6 @@
+.tags
+.tags_sorted_by_file
+.tup/
+build
+src/generated/.mxproject
+src/generated/Projects/

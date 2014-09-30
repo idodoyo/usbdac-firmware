@@ -1,0 +1,21 @@
+CC = arm-none-eabi-gcc
+LD = arm-none-eabi-ld
+OBJCOPY = arm-none-eabi-objcopy
+
+CFLAGS  = -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -ffunction-sections -fdata-sections -Wall -g
+LDFLAGS = -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--gc-sections -static
+
+CFLAGS += -Isrc -Isrc/generated/Inc -Ilib/CMSIS/Device/ST/STM32F3xx/Include -Ilib/CMSIS/Include -Ilib/STM32F3xx_HAL_Driver/Inc -Ilib/STM32_USB_Device_Library/Core/Inc
+CFLAGS += -DSTM32F303xC
+CFLAGS += -std=gnu99
+
+!cc = |> $(CC) $(CFLAGS) -c %f -o %o |>
+
+:foreach lib/STM32F3xx_HAL_Driver/Src/*.c |> !cc |> build/hal_%B.o
+:foreach lib/STM32_USB_Device_Library/Core/Src/*.c |> !cc |> build/hal_%B.o
+:foreach src/device/*.[cs] |> !cc |> build/dev_%B.o
+:foreach src/generated/Src/*.c |> !cc |> build/gen_%B.o
+:foreach src/*.c |> !cc |> build/%B.o
+
+:build/*.o |> $(CC) $(LDFLAGS) -T src/device/STM32F303VC.ld -o %o %f |> build/firmware.elf
+:build/firmware.elf |> $(OBJCOPY) -O ihex %f %o |> build/%B.hex
